@@ -1,5 +1,7 @@
 import socket
 import logging
+import signal
+import sys
 
 
 class Server:
@@ -8,6 +10,9 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self._client_sockets = []
+
+        signal.signal(signal.SIGTERM, self._graceful_shutdown)
 
     def run(self):
         """
@@ -31,6 +36,7 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
+        self._client_sockets.append(client_sock)
         try:
             # TODO: Modify the receive to avoid short-reads
             msg = client_sock.recv(1024).rstrip().decode('utf-8')
@@ -42,6 +48,7 @@ class Server:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
             client_sock.close()
+            self._client_sockets.remove(client_sock)
 
     def __accept_new_connection(self):
         """
@@ -56,3 +63,26 @@ class Server:
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         return c
+
+    def _graceful_shutdown(self, signum, frame):
+        """
+        Maneja el cierre del servidor de manera ordenada.
+
+        Este método se ejecutará cuando se reciba una señal SIGTERM.
+        """
+        logging.info(f"action: signal_received | signal: {signum} | result: graceful_shutdown_initiated")
+
+        if self._server_socket:
+            self._server_socket.close()
+            logging.info("action: close_server_socket | result: success")
+        
+
+        for client_sock in self._client_sockets:
+            try:
+                client_sock.close()
+                logging.info("action: close_client_socket | result: success")
+            except OSError as e:
+                logging.error(f"action: close_client_socket | result: fail | error: {e}")
+
+        logging.info("action: cleanup_resources | result: success")
+        sys.exit(0)

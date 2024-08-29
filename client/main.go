@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"time"
+	"syscall"
+	"os/signal"
 
 	"github.com/op/go-logging"
 	"github.com/pkg/errors"
@@ -100,7 +102,6 @@ func main() {
 		log.Criticalf("%s", err)
 	}
 
-	// Print program config with debugging purposes
 	PrintConfig(v)
 
 	clientConfig := common.ClientConfig{
@@ -111,5 +112,10 @@ func main() {
 	}
 
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop()
+
+	// Channel to listen for OS signals
+	channel := make(chan os.Signal, 1)
+	signal.Notify(channel, syscall.SIGTERM)
+
+	client.StartClientLoop(channel)
 }
