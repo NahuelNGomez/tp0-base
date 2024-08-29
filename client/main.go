@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
-	"time"
-	"syscall"
 	"os/signal"
+	"strings"
+	"syscall"
+	"time"
 
 	"github.com/op/go-logging"
 	"github.com/pkg/errors"
@@ -92,6 +92,16 @@ func PrintConfig(v *viper.Viper) {
 	)
 }
 
+func getBet() common.Bet {
+	return common.Bet{
+		Name:       os.Getenv("NOMBRE"),
+		LastName:   os.Getenv("APELLIDO"),
+		DayOfBirth: os.Getenv("NACIMIENTO"),
+		Document:   os.Getenv("DOCUMENTO"),
+		Number:     os.Getenv("NUMERO"),
+	}
+}
+
 func main() {
 	v, err := InitConfig()
 	if err != nil {
@@ -110,12 +120,13 @@ func main() {
 		LoopAmount:    v.GetInt("loop.amount"),
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
-
-	client := common.NewClient(clientConfig)
+	bet := getBet()
+	client := common.NewClient(clientConfig, bet)
 
 	// Channel to listen for OS signals
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, syscall.SIGTERM)
 
 	client.StartClientLoop(channel)
+	return
 }

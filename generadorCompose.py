@@ -34,7 +34,6 @@ networks:
       config:
         - subnet: 172.25.125.0/24
 """
-
 # Genero la configuración para los clientes
 clients = ""
 for i in range(1, cantidad_clientes + 1):
@@ -46,6 +45,11 @@ for i in range(1, cantidad_clientes + 1):
     environment:
       - CLI_ID={i}
       - CLI_LOG_LEVEL=DEBUG
+      - NOMBRE=NOMBRE{i}
+      - APELLIDO=APELLIDO{i}
+      - DOCUMENTO=DOCUMENTO{i}
+      - NACIMIENTO={i}{i}{i}{i}-10-10
+      - NUMERO={i}{i}{i}{i}
     volumes:
       - ./client/config.yaml:/config.yaml
     networks:

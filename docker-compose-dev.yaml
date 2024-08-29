@@ -21,8 +21,13 @@ services:
     environment:
       - CLI_ID=1
       - CLI_LOG_LEVEL=DEBUG
+      - NOMBRE=NOMBRE1
+      - APELLIDO=APELLIDO1
+      - DOCUMENTO=DOCUMENTO1
+      - NACIMIENTO=1111-10-11
+      - NUMERO=1111
     volumes:
-      - ./client/config.yaml:/config.yaml  
+      - ./client/config.yaml:/config.yaml
     networks:
       - testing_net
     depends_on:
@@ -34,8 +39,13 @@ services:
     environment:
       - CLI_ID=2
       - CLI_LOG_LEVEL=DEBUG
+      - NOMBRE=NOMBRE2
+      - APELLIDO=APELLIDO2
+      - DOCUMENTO=DOCUMENTO2
+      - NACIMIENTO=2222-10-22
+      - NUMERO=2222
     volumes:
-      - ./client/config.yaml:/config.yaml  
+      - ./client/config.yaml:/config.yaml
     networks:
       - testing_net
     depends_on:
