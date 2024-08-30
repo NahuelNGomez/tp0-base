@@ -107,7 +107,16 @@ Modificar servidor y cliente para que ambos sistemas terminen de forma _graceful
 
 Las secciones de repaso del trabajo práctico plantean un caso de uso denominado **Lotería Nacional**. Para la resolución de las mismas deberá utilizarse como base al código fuente provisto en la primera parte, con las modificaciones agregadas en el ejercicio 4.
 
+### Protocolo de comunicación
 
+Se quiso considerar la posibilidad de que, en el Ejercicio 5, el servidor pudiera esperar en un mensaje más de una apuesta. Sin embargo, dado que se pide el log de un número, se utiliza la primera apuesta del cliente para el print de pantalla, considerando que el cliente solo envía una.
+
+
+El protocolo consiste en:
+- Cada valor dentro de una apuesta está separa por comas, de la siguiente manera: ID_CLIENTE,NOMBRE,APELLIDO,DOCUMENTO,NACIMIENTO,NUMERO
+- La separación de cada apuesta se realiza con un \n. Por ejemplo: APUESTA1\nAPUESTA2
+- El fin de cada mensaje se realiza con un \x00. Por lo tanto quedaría APUESTA1\nAPUESTA2\nAPUESTA3\x00
+- El servidor recibe por bloques de 1024 bytes hasta encontrar el \x00. Luego realiza un split para separar las apuestas y poder procesarlas.
 
 ### Ejercicio N°5:
 Modificar la lógica de negocio tanto de los clientes como del servidor para nuestro nuevo caso de uso.

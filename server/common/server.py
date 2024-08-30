@@ -46,16 +46,20 @@ class Server:
                 if not part:
                     break
                 msg += part
-                if part.endswith(b'\n'):
+                if part.endswith(b'\0'):
                     break
-            
-            msg = msg.rstrip().decode('utf-8')
+            msg = msg.decode('utf-8')
+            msg = msg[:-1] # Elimino el caracter nulo 0x00
+            bets = msg.split("\n")
             addr = client_sock.getpeername()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            bet = Bet(*msg.split(","))
-            store_bets([bet])
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}')
-            client_sock.sendall("{}\n".format(bet.document).encode('utf-8'))
+            finalBets = []
+            for bet in bets:
+                new_bet = Bet(*bet.split(","))
+                finalBets.append(new_bet)
+            store_bets(finalBets)
+            logging.info(f'action: apuesta_almacenada | result: success | dni: {finalBets[0].document} | numero: {finalBets[0].number}')
+            client_sock.sendall("{}\n".format(finalBets[0].document).encode('utf-8'))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:

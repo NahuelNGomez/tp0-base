@@ -77,7 +77,7 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 		c.createClientSocket()
 
 		// TODO: Modify the send to avoid short-write
-		io.WriteString(c.conn, fmt.Sprintf("%s,%s,%s,%s,%s,%s\n", c.config.ID, c.bet.Name, c.bet.LastName, c.bet.Document, c.bet.DayOfBirth, c.bet.Number))
+		io.WriteString(c.conn, fmt.Sprintf("%s,%s,%s,%s,%s,%s\x00", c.config.ID, c.bet.Name, c.bet.LastName, c.bet.Document, c.bet.DayOfBirth, c.bet.Number))
 		msg, err := bufio.NewReader(c.conn).ReadString('\n') // Leo hasta el salto de línea
 
 		if err == nil || msg != c.bet.Document {
