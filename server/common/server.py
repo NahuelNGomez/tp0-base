@@ -40,31 +40,33 @@ class Server:
         
         try:
             # TODO: Modify the receive to avoid short-reads
-            msg = b''
             while True:
-                part = client_sock.recv(1024)
-                if not part:
+                msg = b""
+                while True:
+                    part = client_sock.recv(1024)
+                    if not part:
+                        break
+                    msg += part
+                    if b'\x00' in part:
+                        msg = msg.rstrip(b'\x00')
+                        break
+                msg = msg.decode('utf-8')
+                if msg == "exit":
                     break
-                msg += part
-                if part.endswith(b'\0'):
-                    break
-            msg = msg.decode('utf-8')
-            msg = msg[:-1] # Elimino el caracter nulo 0x00
-            bets = msg.split("\n")
-            bets = [bet.rstrip('\r') for bet in bets]
-            addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            finalBets = []
-            print(bets) 
-            print(bets[0])
-            print(len(bets))
-            for bet in bets:
-                new_bet = Bet(*bet.split(","))
-                print("agrego uno")
-                finalBets.append(new_bet)
-            store_bets(finalBets)
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {finalBets[0].document} | numero: {finalBets[0].number}')
-            client_sock.sendall("{}\n".format(finalBets[0].document).encode('utf-8'))
+                bets = msg.split("\n")
+                bets = [bet.rstrip('\r') for bet in bets]
+                if bets[-1] == "":
+                    bets.pop()
+                addr = client_sock.getpeername()
+                logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
+                finalBets = []
+                print("bets->", bets)
+                for bet in bets:
+                    new_bet = Bet(*bet.split(","))
+                    finalBets.append(new_bet)
+                store_bets(finalBets)
+                logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(finalBets)}')
+                client_sock.sendall("{}\n".format("1").encode('utf-8'))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
