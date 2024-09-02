@@ -70,7 +70,7 @@ class Server:
 
         Este método se ejecutará cuando se reciba una señal SIGTERM.
         """
-        logging.info(f"action: signal_received | signal: {signum} | result: graceful_shutdown_initiated")
+        logging.info(f"action: signal_received | result: graceful_shutdown_initiated | signal: {signum}")
 
         for client_sock in self._client_sockets:
             try:
