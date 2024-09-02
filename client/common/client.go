@@ -55,11 +55,10 @@ func (c *Client) createClientSocket() error {
 func (c *Client) StartClientLoop(channel chan os.Signal) {
 	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
 		select {
-			case sig := <-channel:
-				log.Infof("action: signal_received | signal: %v | result: graceful_shutdown_initiated", sig)
+			case sig <-channel:
 				c.conn.Close()
-				log.Infof("action: cleanup_resources | result: success")
-				return
+				log.Infof("action: loop_stopped | result: success | client_id: %v", c.config.ID)
+				os.Exit(0)
 	
 			// El caso normal para enviar mensajes y recibir respuestas
 		default:

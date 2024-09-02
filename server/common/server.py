@@ -72,17 +72,16 @@ class Server:
         """
         logging.info(f"action: signal_received | signal: {signum} | result: graceful_shutdown_initiated")
 
-        if self._server_socket:
-            self._server_socket.close()
-            logging.info("action: close_server_socket | result: success")
-        
-
         for client_sock in self._client_sockets:
             try:
                 client_sock.close()
                 logging.info("action: close_client_socket | result: success")
             except OSError as e:
                 logging.error(f"action: close_client_socket | result: fail | error: {e}")
+                
+        if self._server_socket:
+            self._server_socket.close()
+            logging.info("action: close_server_socket | result: success")        
 
         logging.info("action: cleanup_resources | result: success")
         sys.exit(0)
