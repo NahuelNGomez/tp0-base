@@ -92,16 +92,6 @@ func PrintConfig(v *viper.Viper) {
 	)
 }
 
-func getBet() common.Bet {
-	return common.Bet{
-		Name:       os.Getenv("NOMBRE"),
-		LastName:   os.Getenv("APELLIDO"),
-		DayOfBirth: os.Getenv("NACIMIENTO"),
-		Document:   os.Getenv("DOCUMENTO"),
-		Number:     os.Getenv("NUMERO"),
-	}
-}
-
 func main() {
 	v, err := InitConfig()
 	if err != nil {
@@ -119,9 +109,9 @@ func main() {
 		ID:            v.GetString("id"),
 		LoopAmount:    v.GetInt("loop.amount"),
 		LoopPeriod:    v.GetDuration("loop.period"),
+		MaxAmount:	   v.GetInt("batch.maxAmount"),
 	}
-	bet := getBet()
-	client := common.NewClient(clientConfig, bet)
+	client := common.NewClient(clientConfig)
 
 	// Channel to listen for OS signals
 	channel := make(chan os.Signal, 1)

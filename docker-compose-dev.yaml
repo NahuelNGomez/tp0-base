@@ -24,28 +24,11 @@ services:
       - NOMBRE=NOMBRE1
       - APELLIDO=APELLIDO1
       - DOCUMENTO=DOCUMENTO1
-      - NACIMIENTO=1111-10-11
+      - NACIMIENTO=1111-10-10
       - NUMERO=1111
     volumes:
       - ./client/config.yaml:/config.yaml
-    networks:
-      - testing_net
-    depends_on:
-      - server
-  client2:
-    container_name: client2
-    image: client:latest
-    entrypoint: /client
-    environment:
-      - CLI_ID=2
-      - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=NOMBRE2
-      - APELLIDO=APELLIDO2
-      - DOCUMENTO=DOCUMENTO2
-      - NACIMIENTO=2222-10-22
-      - NUMERO=2222
-    volumes:
-      - ./client/config.yaml:/config.yaml
+      - ./.data/agency-1.csv:/agency-1.csv
     networks:
       - testing_net
     depends_on:

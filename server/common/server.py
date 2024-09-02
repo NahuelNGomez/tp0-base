@@ -51,11 +51,16 @@ class Server:
             msg = msg.decode('utf-8')
             msg = msg[:-1] # Elimino el caracter nulo 0x00
             bets = msg.split("\n")
+            bets = [bet.rstrip('\r') for bet in bets]
             addr = client_sock.getpeername()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
             finalBets = []
+            print(bets) 
+            print(bets[0])
+            print(len(bets))
             for bet in bets:
                 new_bet = Bet(*bet.split(","))
+                print("agrego uno")
                 finalBets.append(new_bet)
             store_bets(finalBets)
             logging.info(f'action: apuesta_almacenada | result: success | dni: {finalBets[0].document} | numero: {finalBets[0].number}')

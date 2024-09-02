@@ -27,21 +27,20 @@ type ClientConfig struct {
 	ServerAddress string
 	LoopAmount    int
 	LoopPeriod    time.Duration
+	MaxAmount     int
 }
 
 // Client Entity that encapsulates how
 type Client struct {
 	config ClientConfig
 	conn   net.Conn
-	bet    Bet
 }
 
 // NewClient Initializes a new client receiving the configuration
 // as a parameter
-func NewClient(config ClientConfig, newBet Bet) *Client {
+func NewClient(config ClientConfig) *Client {
 	client := &Client{
 		config: config,
-		bet:    newBet,
 	}
 	return client
 }
@@ -77,14 +76,28 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 		c.createClientSocket()
 
 		// TODO: Modify the send to avoid short-write
-		io.WriteString(c.conn, fmt.Sprintf("%s,%s,%s,%s,%s,%s\x00", c.config.ID, c.bet.Name, c.bet.LastName, c.bet.Document, c.bet.DayOfBirth, c.bet.Number))
-		msg, err := bufio.NewReader(c.conn).ReadString('\n') // Leo hasta el salto de línea
-
-		if err == nil || msg != c.bet.Document {
-			log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", c.bet.Document, c.bet.Number)
-		} else {
-			log.Infof("action: apuesta_enviada | result: fail | dni: %v | numero: %v", c.bet.Document, c.bet.Number)
+		file, err := os.Open("agency-1.csv")
+		if err != nil {
+			log.Criticalf("action: open_file | result: fail | error: %v", err)
 		}
+		reader := bufio.NewReader(file)
+		stringBets := ""
+		for i := 0; i < c.config.MaxAmount; i++ {
+			line, err := reader.ReadString('\n')
+			stringBets += line
+			if err != nil {
+				log.Criticalf("action: read_line | result: fail | error: %v", err)
+			}
+		}
+		stringBets += "\x00"
+
+
+
+		io.WriteString(c.conn, fmt.Sprintf(stringBets))
+		bufio.NewReader(c.conn).ReadString('\n') // Leo hasta el salto de línea
+
+		log.Infof("action: apuesta_enviada | result: fail | batch: %v", c.config.MaxAmount)
+
 
 		c.conn.Close()
 	}
