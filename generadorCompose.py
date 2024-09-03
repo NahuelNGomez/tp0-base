@@ -21,6 +21,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - CANTIDAD_CLIENTES={cantidad_clientes}
     volumes:
       - ./server/config.ini:/config.ini
     networks:
@@ -60,6 +61,5 @@ for i in range(1, cantidad_clientes + 1):
 
 # Escribo el contenido al archivo de salida
 with open(archivo_salida, "w") as f:
-    f.write(docker_compose_template.format(clients=clients))
-
+    f.write(docker_compose_template.format(clients=clients, cantidad_clientes=cantidad_clientes))
 print(f"Archivo '{archivo_salida}' generado con {cantidad_clientes} clientes.")

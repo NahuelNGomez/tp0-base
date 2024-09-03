@@ -84,7 +84,7 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 		reader := bufio.NewReader(file)
 
 		for {
-			stringBets := ""
+			stringBets := "UP"
 			count := 0
 
 			// Leer y preparar el paquete de apuestas
@@ -94,7 +94,7 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 					if err == io.EOF {
 						if len(line) > 0 {
 							line = line[:len(line)-1]
-							stringBets += "1," + line
+							stringBets += c.config.ID + "," + line
 							count++
 						}
 						break
@@ -104,7 +104,7 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 					}
 				}
 				line = line[:len(line)-1]
-				stringBets += "1," + line
+				stringBets += c.config.ID + "," + line
 				count++
 				if i < c.config.MaxAmount-1 {
 					stringBets += "\n"
@@ -129,7 +129,22 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 
 			log.Infof("action: apuesta_enviada | result: success | batch: %v", count)
 		}
-		io.WriteString(c.conn, "exit")
+		text := "DOWN" + c.config.ID + "\x00"
+		io.WriteString(c.conn, text)
+		msg, err := bufio.NewReader(c.conn).ReadString('\n')
+		if msg == "FALTA\n" {
+			for {
+				time.Sleep(1000)
+				io.WriteString(c.conn, text)
+				msg, err = bufio.NewReader(c.conn).ReadString('\n')
+				if msg != "FALTA\n" {
+					break
+				}
+			}
+		}
+		log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, msg)
+		log.Infof("action: receive_message | result: success | client_id: %v | err: %v", c.config.ID, err)
+		io.WriteString(c.conn, "exit"+"\x00")
 		c.conn.Close()
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
