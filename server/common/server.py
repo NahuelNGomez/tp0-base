@@ -60,7 +60,6 @@ class Server:
                 addr = client_sock.getpeername()
                 logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
                 finalBets = []
-                print("bets->", bets)
                 for bet in bets:
                     new_bet = Bet(*bet.split(","))
                     finalBets.append(new_bet)

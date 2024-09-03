@@ -118,6 +118,8 @@ El protocolo consiste en:
 - El fin de cada mensaje se realiza con un \x00. Por lo tanto quedaría APUESTA1\nAPUESTA2\nAPUESTA3\x00
 - El servidor recibe por bloques de 1024 bytes hasta encontrar el \x00. Luego realiza un split para separar las apuestas y poder procesarlas.
 
+Cada cliente tiene una agencia en particular. Por lo tanto, si se ejecuta el programa con un solo cliente, se utilizará un .csv (agencia 1). Si se ejecuta con 2 cliente, se utilizarán 2 .csv (agencia 1 y agencia 2) y así sucesivamente hasta un máximo de 5 clientes, utilizando los 5 archivos .csv.
+
 ### Ejercicio N°5:
 Modificar la lógica de negocio tanto de los clientes como del servidor para nuestro nuevo caso de uso.
 

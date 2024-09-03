@@ -75,7 +75,7 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 		c.createClientSocket()
 
 		// TODO: Modify the send to avoid short-write
-		file, err := os.Open("agency-1.csv")
+		file, err := os.Open("agency.csv")
 		if err != nil {
 			log.Criticalf("action: open_file | result: fail | error: %v", err)
 		}
