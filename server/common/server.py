@@ -11,7 +11,7 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._cantidad_clientes = cantidad_clientes
-        self._clients_uploading_bets = cantidad_clientes
+        self._clients_uploading_bets = list(range(1, cantidad_clientes + 1)) # Clients that are uploading bets. Starts with all clients
         self._client_sockets = []
 
         signal.signal(signal.SIGTERM, self._graceful_shutdown)
@@ -48,9 +48,9 @@ class Server:
         This method should parse the message and store the bet
         """
         id = int(id)
-        if self._clients_uploading_bets > 0:
-            self._clients_uploading_bets -= 1
-        if self._clients_uploading_bets == 0:
+        if id in self._clients_uploading_bets:
+            self._clients_uploading_bets.remove(id)
+        if self._clients_uploading_bets == []:
             winners = self.__verify_winners(id)
             str_winners = [bet.document for bet in winners]
             str_winners = ','.join(str_winners)
@@ -85,6 +85,7 @@ class Server:
                     break
                 if "DOWN" in msg[0:4]:
                     self.__handle_down_bet(msg[4],client_sock)
+                    break
                 elif "UP" in msg[0:2]:
                     msg = msg[2:]
                     bets = msg.split("\n")

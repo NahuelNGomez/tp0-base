@@ -129,23 +129,32 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 
 			log.Infof("action: apuesta_enviada | result: success | batch: %v", count)
 		}
+		io.WriteString(c.conn, "exit"+"\x00")
+		c.conn.Close()
+		c.createClientSocket()
+
 		text := "DOWN" + c.config.ID + "\x00"
 		io.WriteString(c.conn, text)
 		msg, err := bufio.NewReader(c.conn).ReadString('\n')
 		if msg == "FALTA\n" {
+			log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, msg)
+			c.conn.Close()
 			for {
+				c.createClientSocket()
 				time.Sleep(1000)
 				io.WriteString(c.conn, text)
 				msg, err = bufio.NewReader(c.conn).ReadString('\n')
+				c.conn.Close()
 				if msg != "FALTA\n" {
 					break
 				}
 			}
+		} else {
+			c.conn.Close()
 		}
 		log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, msg)
 		log.Infof("action: receive_message | result: success | client_id: %v | err: %v", c.config.ID, err)
-		io.WriteString(c.conn, "exit"+"\x00")
-		c.conn.Close()
+
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
 }
