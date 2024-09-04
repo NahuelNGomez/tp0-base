@@ -2,6 +2,10 @@ import socket
 import logging
 import signal
 import sys
+
+from .betHandler import check_type_msg, confirm_upload_to_client, parse_bets, recieve_msg, send_wait, send_winners, verify_clients_uploading_bets
+
+from .const import DOWN, EXIT, UP
 from .utils import has_won, load_bets, store_bets, Bet
 
 class Server:
@@ -31,33 +35,31 @@ class Server:
             client_sock = self.__accept_new_connection()
             self.__handle_client_connection(client_sock)
 
-    def __verify_winners(self,id):
-        bets = load_bets()
-        winners = [bet for bet in bets if has_won(bet)]
-        self.winners = winners
-        logging.info(
-            f'action: set_winners_from_store | result: success | winners: {len(winners)}')
-        winners = [bet for bet in winners if bet.agency == int(id)]
-
-        return winners
-
-    def __handle_down_bet(self, id, client_sock):
+    def __handle_down_bet(self, msg, client_sock):
         """
         Handles a down bet message
 
         This method should parse the message and store the bet
         """
-        id = int(id)
-        if id in self._clients_uploading_bets:
-            self._clients_uploading_bets.remove(id)
-        if self._clients_uploading_bets == []:
-            winners = self.__verify_winners(id)
-            str_winners = [bet.document for bet in winners]
-            str_winners = ','.join(str_winners)
-            client_sock.sendall("{}\n".format(str_winners).encode('utf-8'))
 
+        verify_clients_uploading_bets(msg, client_sock, self._clients_uploading_bets) 
+        
+        if self._clients_uploading_bets == []:
+            amount_winners = send_winners(client_sock, msg)
+            logging.info(
+            f'action: set_winners_from_store | result: success | winners: {amount_winners}')
         else:
-            client_sock.sendall("{}\n".format("FALTA").encode('utf-8'))
+            send_wait(client_sock)
+    
+    def __handle_up_bet(self, msg, client_sock):
+        bets = parse_bets(msg)
+
+        addr = client_sock.getpeername()
+        logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
+        
+        store_bets(bets)
+        logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets)}')
+        confirm_upload_to_client(client_sock)
 
     def __handle_client_connection(self, client_sock):
         """
@@ -69,38 +71,18 @@ class Server:
         self._client_sockets.append(client_sock)
         
         try:
-            # TODO: Modify the receive to avoid short-reads
             while True:
-                msg = b""
-                while True:
-                    part = client_sock.recv(1024)
-                    if not part:
-                        break
-                    msg += part
-                    if b'\x00' in part:
-                        msg = msg.rstrip(b'\x00')
-                        break
-                msg = msg.decode('utf-8')
-                if msg == "exit":
+                msg = recieve_msg(client_sock)
+                type = check_type_msg(msg)
+
+                if type == EXIT:
                     break
-                if "DOWN" in msg[0:4]:
-                    self.__handle_down_bet(msg[4],client_sock)
+                elif type == DOWN:
+                    self.__handle_down_bet(msg,client_sock)
                     break
-                elif "UP" in msg[0:2]:
-                    msg = msg[2:]
-                    bets = msg.split("\n")
-                    bets = [bet.rstrip('\r') for bet in bets]
-                    if bets[-1] == "":
-                        bets.pop()
-                    addr = client_sock.getpeername()
-                    logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-                    finalBets = []
-                    for bet in bets:
-                        new_bet = Bet(*bet.split(","))
-                        finalBets.append(new_bet)
-                    store_bets(finalBets)
-                    logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(finalBets)}')
-                    client_sock.sendall("{}\n".format("1").encode('utf-8'))
+                elif type == UP:
+                    self.__handle_up_bet(msg,client_sock)
+                    
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
