@@ -1,7 +1,6 @@
 package common
 
 import (
-	"bufio"
 	"io"
 	"net"
 	"os"
@@ -73,88 +72,29 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 	default:
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
-
-		// TODO: Modify the send to avoid short-write
-		file, err := os.Open("agency.csv")
-		if err != nil {
-			log.Criticalf("action: open_file | result: fail | error: %v", err)
-		}
-		defer file.Close()
-
-		reader := bufio.NewReader(file)
-
-		for {
-			stringBets := "UP"
-			count := 0
-
-			// Leer y preparar el paquete de apuestas
-			for i := 0; i < c.config.MaxAmount; i++ {
-				line, err := reader.ReadString('\n')
-				if err != nil {
-					if err == io.EOF {
-						if len(line) > 0 {
-							line = line[:len(line)-1]
-							stringBets += c.config.ID + "," + line
-							count++
-						}
-						break
-					} else {
-						log.Criticalf("action: read_line | result: fail | error: %v", err)
-						return
-					}
-				}
-				line = line[:len(line)-1]
-				stringBets += c.config.ID + "," + line
-				count++
-				if i < c.config.MaxAmount-1 {
-					stringBets += "\n"
-				}
-			}
-
-			if count == 0 {
-				break // No hay más apuestas que enviar
-			}
-
-			stringBets += "\x00"
-			io.WriteString(c.conn, stringBets)
-
-			msg, err := bufio.NewReader(c.conn).ReadString('\n') // Esperar confirmación
-			if err != nil || msg != "1\n" {
-				log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
-					c.config.ID,
-					err,
-				)
-				return
-			}
-
-			log.Infof("action: apuesta_enviada | result: success | batch: %v", count)
-		}
+		sendBets(c.config, c.conn)
 		io.WriteString(c.conn, "exit"+"\x00")
 		c.conn.Close()
-		c.createClientSocket()
 
-		text := "DOWN" + c.config.ID + "\x00"
-		io.WriteString(c.conn, text)
-		msg, err := bufio.NewReader(c.conn).ReadString('\n')
-		if msg == "FALTA\n" {
-			log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, msg)
+		c.createClientSocket()
+		response := askForWinners(c.config, c.conn)
+
+		if response == "FALTA\n" {
+			log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, response)
 			c.conn.Close()
 			for {
 				c.createClientSocket()
 				time.Sleep(1000)
-				io.WriteString(c.conn, text)
-				msg, err = bufio.NewReader(c.conn).ReadString('\n')
+				response = askForWinners(c.config, c.conn)
 				c.conn.Close()
-				if msg != "FALTA\n" {
+				if response != "FALTA\n" {
 					break
 				}
 			}
 		} else {
 			c.conn.Close()
 		}
-		log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, msg)
-		log.Infof("action: receive_message | result: success | client_id: %v | err: %v", c.config.ID, err)
-
+		log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, response)
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
 }
