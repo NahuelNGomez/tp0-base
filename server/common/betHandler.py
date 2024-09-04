@@ -29,7 +29,7 @@ def parse_bets(msg):
     return finalBets
 
 def check_type_msg(msg):
-    if msg == "exit":
+    if "EXIT" in msg[0:4]:
         return EXIT
     if "DOWN" in msg[0:4]:
         return DOWN
@@ -41,10 +41,6 @@ def check_type_msg(msg):
 def confirm_upload_to_client(client_sock):
     client_sock.sendall("{}\n".format("1").encode('utf-8'))
 
-def verify_clients_uploading_bets(msg, client_sock, clients_uploading_bets):
-    id = get_id_down_msg(msg)
-    if id in clients_uploading_bets:
-        clients_uploading_bets.remove(id)
     
 def send_winners(client_sock, msg):
     id = get_id_down_msg(msg)

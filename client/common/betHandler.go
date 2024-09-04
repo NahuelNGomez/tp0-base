@@ -71,3 +71,28 @@ func askForWinners(config ClientConfig, conn net.Conn) string {
 	msg, _ := bufio.NewReader(conn).ReadString('\n')
 	return msg
 }
+
+func parseToArray(s string) []string {
+	var result []string
+	var current string
+
+	for i := 0; i < len(s); i++ {
+		if s[i] == ',' {
+			result = append(result, current)
+			current = ""
+		} else {
+			current += string(s[i])
+		}
+	}
+	// Añadir el último valor al array
+	if current != "" {
+		result = append(result, current)
+	}
+
+	return result
+}
+
+func parseResponse(response string) int {
+	array := parseToArray(response)
+	return len(array)
+}

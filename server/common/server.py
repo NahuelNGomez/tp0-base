@@ -3,7 +3,7 @@ import logging
 import signal
 import sys
 
-from .betHandler import check_type_msg, confirm_upload_to_client, parse_bets, recieve_msg, send_wait, send_winners, verify_clients_uploading_bets
+from .betHandler import check_type_msg, confirm_upload_to_client, parse_bets, recieve_msg, send_wait, send_winners
 
 from .const import DOWN, EXIT, UP
 from .utils import has_won, load_bets, store_bets, Bet
@@ -42,21 +42,18 @@ class Server:
         This method should parse the message and store the bet
         """
 
-        verify_clients_uploading_bets(msg, client_sock, self._clients_uploading_bets) 
-        
         if self._clients_uploading_bets == []:
             amount_winners = send_winners(client_sock, msg)
             logging.info(
-            f'action: set_winners_from_store | result: success | winners: {amount_winners}')
+            f'action: piden_resultados | result: success | winners: {amount_winners}')
         else:
+            logging.info(
+            f'action: piden_resultados | result: fail')
             send_wait(client_sock)
     
     def __handle_up_bet(self, msg, client_sock):
         bets = parse_bets(msg)
 
-        addr = client_sock.getpeername()
-        logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-        
         store_bets(bets)
         logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets)}')
         confirm_upload_to_client(client_sock)
@@ -74,8 +71,10 @@ class Server:
             while True:
                 msg = recieve_msg(client_sock)
                 type = check_type_msg(msg)
-
                 if type == EXIT:
+                    self._clients_uploading_bets.remove(int(msg[4]))
+                    if self._clients_uploading_bets == []:
+                        logging.info(f'action: sorteo | result: success')
                     break
                 elif type == DOWN:
                     self.__handle_down_bet(msg,client_sock)

@@ -73,7 +73,7 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 		sendBets(c.config, c.conn)
-		io.WriteString(c.conn, "exit"+"\x00")
+		io.WriteString(c.conn, "EXIT"+c.config.ID+"\x00")
 		c.conn.Close()
 
 		c.createClientSocket()
@@ -83,8 +83,8 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 			log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, response)
 			c.conn.Close()
 			for {
+				time.Sleep(1 * time.Second)
 				c.createClientSocket()
-				time.Sleep(1000)
 				response = askForWinners(c.config, c.conn)
 				c.conn.Close()
 				if response != "FALTA\n" {
@@ -94,7 +94,9 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 		} else {
 			c.conn.Close()
 		}
-		log.Infof("action: receive_message | result: success | client_id: %v | message: %v", c.config.ID, response)
+		amountWinners := parseResponse(response)
+		log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", amountWinners)
+
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
 }
