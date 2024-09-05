@@ -2,6 +2,8 @@ import socket
 import logging
 import signal
 import sys
+
+from .betHandler import confirm_upload_to_client, parse_bet, recieve_msg
 from .utils import store_bets, Bet
 
 class Server:
@@ -23,8 +25,6 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
         while True:
             client_sock = self.__accept_new_connection()
             self.__handle_client_connection(client_sock)
@@ -39,27 +39,14 @@ class Server:
         self._client_sockets.append(client_sock)
         
         try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = b''
-            while True:
-                part = client_sock.recv(1024)
-                if not part:
-                    break
-                msg += part
-                if part.endswith(b'\0'):
-                    break
-            msg = msg.decode('utf-8')
-            msg = msg[:-1] # Elimino el caracter nulo 0x00
-            bets = msg.split("\n")
+
+            msg = recieve_msg(client_sock)
+            bet = parse_bet(msg)
             addr = client_sock.getpeername()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            finalBets = []
-            for bet in bets:
-                new_bet = Bet(*bet.split(","))
-                finalBets.append(new_bet)
-            store_bets(finalBets)
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {finalBets[0].document} | numero: {finalBets[0].number}')
-            client_sock.sendall("{}\n".format(finalBets[0].document).encode('utf-8'))
+            store_bets(bet)
+            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet[0].document} | numero: {bet[0].number}')
+            confirm_upload_to_client(client_sock)
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:

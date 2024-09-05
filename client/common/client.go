@@ -1,9 +1,6 @@
 package common
 
 import (
-	"bufio"
-	"fmt"
-	"io"
 	"net"
 	"os"
 	"time"
@@ -70,22 +67,9 @@ func (c *Client) StartClientLoop(channel chan os.Signal) {
 		c.conn.Close()
 		log.Infof("action: cleanup_resources | result: success")
 		return
-
-		// El caso normal para enviar mensajes y recibir respuestas
 	default:
-		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
-
-		// TODO: Modify the send to avoid short-write
-		io.WriteString(c.conn, fmt.Sprintf("%s,%s,%s,%s,%s,%s\x00", c.config.ID, c.bet.Name, c.bet.LastName, c.bet.Document, c.bet.DayOfBirth, c.bet.Number))
-		msg, err := bufio.NewReader(c.conn).ReadString('\n') // Leo hasta el salto de línea
-
-		if err == nil || msg != c.bet.Document {
-			log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", c.bet.Document, c.bet.Number)
-		} else {
-			log.Infof("action: apuesta_enviada | result: fail | dni: %v | numero: %v", c.bet.Document, c.bet.Number)
-		}
-
+		sendBets(c.config, c.bet, c.conn)
 		c.conn.Close()
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)

@@ -116,7 +116,10 @@ El protocolo consiste en:
 - Cada valor dentro de una apuesta está separa por comas, de la siguiente manera: ID_CLIENTE,NOMBRE,APELLIDO,DOCUMENTO,NACIMIENTO,NUMERO
 - La separación de cada apuesta se realiza con un \n. Por ejemplo: APUESTA1\nAPUESTA2
 - El fin de cada mensaje se realiza con un \x00. Por lo tanto quedaría APUESTA1\nAPUESTA2\nAPUESTA3\x00
-- El servidor recibe por bloques de 1024 bytes hasta encontrar el \x00. Luego realiza un split para separar las apuestas y poder procesarlas.
+- El servidor recibe por bloques de 1024 bytes hasta encontrar el \x00. Luego realiza un split para separar las apuestas y poder procesarlas. Se considera que el buffer de 1024 es suficiente para almacenar la batch de mensajes completa. (aproximadamente un máximo de 20 apuestas por batch)
+
+
+En el ejercicio 5, se utilizaron variables de entorno para los campos referidos a cada apuesta. Cada cliente envía solamente una apuesta y cierra la conexión.
 
 ### Ejercicio N°5:
 Modificar la lógica de negocio tanto de los clientes como del servidor para nuestro nuevo caso de uso.
