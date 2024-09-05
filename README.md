@@ -213,7 +213,8 @@ El protocolo consiste en:
 ### Concurrencia
  - La concurrencia se manejó con el módulo "multiprocessing".
  - Cada vez que llega una nueva conexión al servidor, se crea un proceso nuevo para handlear las peticiones del cliente, mientras espera por más.
- - Se utiliza una variable compartida llamada _clients_uploading_bets. Es un array que, al principio contiene la lista de todos los clientes  [1,2,...] y se van eliminando los elementos a medida que cada cliente vaya terminando de subir sus apuestas.
+ - Se utiliza una variable compartida llamada _clients_uploading_bets. Es un array que, al principio contiene la lista de todos los clientes  [1,2,...] y se van eliminando los elementos a medida que cada cliente vaya terminando de subir sus apuestas. El mismo maneja la concurrencia mediante un lock.
+ - De forma similar, antes de llamar a la función <b>store_bets(bets)</b> se utiliza otro lock para controlar el manejo concurrente.
 
 
  ### Ejecuciones

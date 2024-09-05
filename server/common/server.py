@@ -18,7 +18,8 @@ class Server:
         self._cantidad_clientes = cantidad_clientes
         manager = Manager()
         self._clients_uploading_bets = manager.list(range(1, cantidad_clientes + 1)) # Clients that are uploading bets. Starts with all clients
-        self._lock = Lock()
+        self._lock_array = Lock()
+        self._lock_file = Lock()
         self._client_sockets = []
         self.handlerThreads = []
 
@@ -47,7 +48,7 @@ class Server:
 
         This method should parse the message and store the bet
         """
-        with self._lock: 
+        with self._lock_array: 
             if not self._clients_uploading_bets:
                 amount_winners = send_winners(client_sock, msg)
                 logging.info(
@@ -59,8 +60,8 @@ class Server:
     
     def __handle_up_bet(self, msg, client_sock):
         bets = parse_bets(msg)
-
-        store_bets(bets)
+        with self._lock_file:
+            store_bets(bets)
         logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets)}')
         confirm_upload_to_client(client_sock)
 
@@ -78,7 +79,7 @@ class Server:
                 msg = recieve_msg(client_sock)
                 type = check_type_msg(msg)
                 if type == EXIT:
-                    with self._lock: 
+                    with self._lock_array: 
                         if int(msg[4]) in self._clients_uploading_bets:
                             self._clients_uploading_bets.remove(int(msg[4]))
                         if not self._clients_uploading_bets:
