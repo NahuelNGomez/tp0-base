@@ -237,3 +237,12 @@ Se muestra un ejemplo donde, son 3 clientes y cuando se terminan de recibir apue
 
 
 ![alt text](image-2.png)
+
+
+
+---
+Se puede utilizar una señal para cerrar el container y este cerrará de forma graceful:
+```
+docker kill --signal=SIGTERM <container>
+```
+![alt text](image-3.png)
