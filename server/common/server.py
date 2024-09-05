@@ -1,6 +1,7 @@
 import socket
 import logging
 import signal
+from multiprocessing import Process, Lock, Manager
 import sys
 
 from .betHandler import check_type_msg, confirm_upload_to_client, parse_bets, recieve_msg, send_wait, send_winners
@@ -15,8 +16,11 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._cantidad_clientes = cantidad_clientes
-        self._clients_uploading_bets = list(range(1, cantidad_clientes + 1)) # Clients that are uploading bets. Starts with all clients
+        manager = Manager()
+        self._clients_uploading_bets = manager.list(range(1, cantidad_clientes + 1)) # Clients that are uploading bets. Starts with all clients
+        self._lock = Lock()
         self._client_sockets = []
+        self.handlerThreads = []
 
         signal.signal(signal.SIGTERM, self._graceful_shutdown)
 
@@ -28,12 +32,14 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
         while True:
+            
             client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+            handler = Process(target=self.__handle_client_connection, args=(client_sock,))
+            #self.__handle_client_connection(client_sock)
+            handler.start()
+            self.handlerThreads.append(handler)
+            self.handlerThreads = [handler for handler in self.handlerThreads if handler.is_alive()]
 
     def __handle_down_bet(self, msg, client_sock):
         """
@@ -41,15 +47,15 @@ class Server:
 
         This method should parse the message and store the bet
         """
-
-        if self._clients_uploading_bets == []:
-            amount_winners = send_winners(client_sock, msg)
-            logging.info(
-            f'action: piden_resultados | result: success | winners: {amount_winners}')
-        else:
-            logging.info(
-            f'action: piden_resultados | result: fail')
-            send_wait(client_sock)
+        with self._lock: 
+            if not self._clients_uploading_bets:
+                amount_winners = send_winners(client_sock, msg)
+                logging.info(
+                f'action: piden_resultados | result: success | winners: {amount_winners}')
+            else:
+                logging.info(
+                f'action: piden_resultados | result: fail')
+                send_wait(client_sock)
     
     def __handle_up_bet(self, msg, client_sock):
         bets = parse_bets(msg)
@@ -72,10 +78,11 @@ class Server:
                 msg = recieve_msg(client_sock)
                 type = check_type_msg(msg)
                 if type == EXIT:
-                    self._clients_uploading_bets.remove(int(msg[4]))
-                    if self._clients_uploading_bets == []:
-                        logging.info(f'action: sorteo | result: success')
-                    break
+                    with self._lock: 
+                        self._clients_uploading_bets.remove(int(msg[4]))
+                        if not self._clients_uploading_bets:
+                            logging.info(f'action: sorteo | result: success')
+                        break
                 elif type == DOWN:
                     self.__handle_down_bet(msg,client_sock)
                     break
@@ -121,6 +128,10 @@ class Server:
                 logging.info("action: close_client_socket | result: success")
             except OSError as e:
                 logging.error(f"action: close_client_socket | result: fail | error: {e}")
+        
+        for handler in self.handlerThreads:
+            handler.terminate()
+            logging.info("action: terminate_handler | result: success")
 
         logging.info("action: cleanup_resources | result: success")
         sys.exit(0)
