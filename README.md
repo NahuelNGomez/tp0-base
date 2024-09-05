@@ -107,19 +107,6 @@ Modificar servidor y cliente para que ambos sistemas terminen de forma _graceful
 
 Las secciones de repaso del trabajo práctico plantean un caso de uso denominado **Lotería Nacional**. Para la resolución de las mismas deberá utilizarse como base al código fuente provisto en la primera parte, con las modificaciones agregadas en el ejercicio 4.
 
-### Protocolo de comunicación
-
-Se quiso considerar la posibilidad de que, en el Ejercicio 5, el servidor pudiera esperar en un mensaje más de una apuesta. Sin embargo, dado que se pide el log de un número, se utiliza la primera apuesta del cliente para el print de pantalla, considerando que el cliente solo envía una.
-
-
-El protocolo consiste en:
-- Cada valor dentro de una apuesta está separa por comas, de la siguiente manera: ID_CLIENTE,NOMBRE,APELLIDO,DOCUMENTO,NACIMIENTO,NUMERO
-- La separación de cada apuesta se realiza con un \n. Por ejemplo: APUESTA1\nAPUESTA2
-- El fin de cada mensaje se realiza con un \x00. Por lo tanto quedaría APUESTA1\nAPUESTA2\nAPUESTA3\x00
-- El servidor recibe por bloques de 1024 bytes hasta encontrar el \x00. Luego realiza un split para separar las apuestas y poder procesarlas.
-
-Cada cliente tiene una agencia en particular. Por lo tanto, si se ejecuta el programa con un solo cliente, se utilizará un .csv (agencia 1). Si se ejecuta con 2 cliente, se utilizarán 2 .csv (agencia 1 y agencia 2) y así sucesivamente hasta un máximo de 5 clientes, utilizando los 5 archivos .csv.
-
 ### Ejercicio N°5:
 Modificar la lógica de negocio tanto de los clientes como del servidor para nuestro nuevo caso de uso.
 
@@ -189,3 +176,36 @@ Cada ejercicio deberá resolverse en una rama independiente con nombres siguiend
 Puden obtener un listado del último commit de cada rama ejecutando `git ls-remote`.
 
 Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección provistos [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
+
+
+## Implementación
+
+### Protocolo de comunicación
+
+El protocolo consiste en:
+- Cada valor dentro de una apuesta está separa por comas, de la siguiente manera: ID_CLIENTE,NOMBRE,APELLIDO,DOCUMENTO,NACIMIENTO,NUMERO
+- La separación de cada apuesta se realiza con un \n. Por ejemplo: APUESTA1\nAPUESTA2
+- El fin de cada mensaje se realiza con un \x00. Por lo tanto quedaría APUESTA1\nAPUESTA2\nAPUESTA3\x00
+- El servidor recibe por bloques de 1024 bytes hasta encontrar el \x00. Luego realiza un split para separar las apuestas y poder procesarlas.
+- Existen 3 tipos de mensajes (Los cuales se anteponen a todos los mensajes enviados):
+    - tipo UP: El cliente envía batch de apuestas para subirlas al servidor.
+    - tipo EXIT: El cliente ya terminó de subir todos las apuestas y quiere cerrar la conexión.
+    - tipo DOWN: El cliente quiere pedir los ganadores de su agencia.
+
+- Ejemplo de los 3 tipos de mensajes:
+    - tipo UP: "UPAPUESTA1\nAPUESTA2\nAPUESTA3\x00"
+    - tipo DOWN: "DOWN1" (el último numero representa la agencia de la que quiere pedir resultados).
+    - tipo EXIT: "EXIT1" (El último número representa la agencia que termina de enviar los resultados). 
+
+### Ejemplo básico de una carga de datos
+![alt text](image-1.png)
+
+### Ejemplo del ejercicio 8 con 2 clientes
+![alt text](image.png)
+### Supuestos
+
+- Cada cliente tiene una agencia en particular. Por lo tanto, si se ejecuta el programa con un solo cliente, se utilizará un .csv (agencia 1). Si se ejecuta con 2 cliente, se utilizarán 2 .csv (agencia 1 y agencia 2) y así sucesivamente hasta un máximo de 5 clientes, utilizando los 5 archivos proporcionados por la cátedra.
+- El bloque de 1024 bytes es suficiente para almacenar el batch completo de datos recibidos por el cliente. Por lo tanto, considerando que, cada apuesta tiene alrededor de 50 caracteres, al tamaño máximo de apuestas por batch es ≈ 20
+
+
+- Se quiso considerar la posibilidad de que, en el <b>Ejercicio 5</b>, el servidor pudiera esperar en un mensaje más de una apuesta. Sin embargo, dado que se pide el log de un número, se utiliza la primera apuesta del cliente para el print de pantalla.
