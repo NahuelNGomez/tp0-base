@@ -9,7 +9,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - CANTIDAD_CLIENTES=5
+      - CANTIDAD_CLIENTES=3
     volumes:
       - ./server/config.ini:/config.ini
     networks:
@@ -68,44 +68,6 @@ services:
     volumes:
       - ./client/config.yaml:/config.yaml
       - ./.data/agency-3.csv:/agency.csv
-    networks:
-      - testing_net
-    depends_on:
-      - server
-  client4:
-    container_name: client4
-    image: client:latest
-    entrypoint: /client
-    environment:
-      - CLI_ID=4
-      - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=NOMBRE4
-      - APELLIDO=APELLIDO4
-      - DOCUMENTO=DOCUMENTO4
-      - NACIMIENTO=4444-10-10
-      - NUMERO=4444
-    volumes:
-      - ./client/config.yaml:/config.yaml
-      - ./.data/agency-4.csv:/agency.csv
-    networks:
-      - testing_net
-    depends_on:
-      - server
-  client5:
-    container_name: client5
-    image: client:latest
-    entrypoint: /client
-    environment:
-      - CLI_ID=5
-      - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=NOMBRE5
-      - APELLIDO=APELLIDO5
-      - DOCUMENTO=DOCUMENTO5
-      - NACIMIENTO=5555-10-10
-      - NUMERO=5555
-    volumes:
-      - ./client/config.yaml:/config.yaml
-      - ./.data/agency-5.csv:/agency.csv
     networks:
       - testing_net
     depends_on:

@@ -209,3 +209,27 @@ El protocolo consiste en:
 
 
 - Se quiso considerar la posibilidad de que, en el <b>Ejercicio 5</b>, el servidor pudiera esperar en un mensaje más de una apuesta. Sin embargo, dado que se pide el log de un número, se utiliza la primera apuesta del cliente para el print de pantalla.
+
+### Concurrencia
+ - La concurrencia se manejó con el módulo "multiprocessing".
+ - Cada vez que llega una nueva conexión al servidor, se crea un proceso nuevo para handlear las peticiones del cliente, mientras espera por más.
+ - Se utiliza una variable compartida llamada _clients_uploading_bets. Es un array que, al principio contiene la lista de todos los clientes  [1,2,...] y se van eliminando los elementos a medida que cada cliente vaya terminando de subir sus apuestas.
+
+
+ ### Ejecuciones
+
+ 1. Primero generamos el docker compose (siendo N la cantidad de clientes. con 1 ≤ N ≤ 5):
+```
+ ./generar-compose.sh docker-compose-dev.yaml N
+```
+ 
+ 2. Levantamos el docker compose:
+ ```
+ make docker-compose-up
+```
+ 3. Abrimos la terminal de logs:
+ ```
+ make docker-compose-logs
+```
+
+![alt text](image-2.png)

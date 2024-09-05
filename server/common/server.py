@@ -79,7 +79,8 @@ class Server:
                 type = check_type_msg(msg)
                 if type == EXIT:
                     with self._lock: 
-                        self._clients_uploading_bets.remove(int(msg[4]))
+                        if int(msg[4]) in self._clients_uploading_bets:
+                            self._clients_uploading_bets.remove(int(msg[4]))
                         if not self._clients_uploading_bets:
                             logging.info(f'action: sorteo | result: success')
                         break
