@@ -232,4 +232,8 @@ El protocolo consiste en:
  make docker-compose-logs
 ```
 
+
+Se muestra un ejemplo donde, son 3 clientes y cuando se terminan de recibir apuestas (Se loggea sorteo | result: success), se muestra que se reciben 3 pedidos de resultados exitosos.  
+
+
 ![alt text](image-2.png)
