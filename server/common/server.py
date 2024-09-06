@@ -2,6 +2,7 @@ import socket
 import logging
 import signal
 from multiprocessing import Process, Lock, Manager
+from multiprocessing.pool import ThreadPool
 import sys
 
 from .betHandler import check_type_msg, confirm_upload_to_client, parse_bets, recieve_msg, send_wait, send_winners
@@ -21,7 +22,6 @@ class Server:
         self._lock_array = Lock()
         self._lock_file = Lock()
         self._client_sockets = []
-        self.handlerThreads = []
 
         signal.signal(signal.SIGTERM, self._graceful_shutdown)
 
@@ -33,14 +33,11 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-        while True:
-            
-            client_sock = self.__accept_new_connection()
-            handler = Process(target=self.__handle_client_connection, args=(client_sock,))
-            #self.__handle_client_connection(client_sock)
-            handler.start()
-            self.handlerThreads.append(handler)
-            self.handlerThreads = [handler for handler in self.handlerThreads if handler.is_alive()]
+        with ThreadPool(processes=10) as pool:
+            while True:
+                client_sock = self.__accept_new_connection()
+                pool.apply_async(self.__handle_client_connection, args=(client_sock,))
+
 
     def __handle_down_bet(self, msg, client_sock):
         """
@@ -123,17 +120,11 @@ class Server:
             self._server_socket.close()
             logging.info("action: close_server_socket | result: success")
         
-
         for client_sock in self._client_sockets:
             try:
                 client_sock.close()
                 logging.info("action: close_client_socket | result: success")
             except OSError as e:
                 logging.error(f"action: close_client_socket | result: fail | error: {e}")
-        
-        for handler in self.handlerThreads:
-            handler.terminate()
-            logging.info("action: terminate_handler | result: success")
-
         logging.info("action: cleanup_resources | result: success")
         sys.exit(0)
